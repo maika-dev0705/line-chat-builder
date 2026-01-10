@@ -1588,7 +1588,7 @@ function buildExportHtml() {
   const previewWidth = Math.round(
     document.querySelector(".phone")?.getBoundingClientRect().width || 420
   );
-  const exportWidth = Math.max(360, previewWidth);
+  const exportWidth = Math.max(360, previewWidth + 24);
   const rows = state.messages
     .map((message) => {
       const character = getCharacter(message.speakerId);
