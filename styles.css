@@ -466,6 +466,22 @@ body {
   background: #ffffff;
 }
 
+.character-delete {
+  border: 1px solid var(--stroke);
+  background: #ffffff;
+  color: #d33a2c;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.character-delete:hover {
+  border-color: rgba(211, 58, 44, 0.4);
+  background: rgba(211, 58, 44, 0.08);
+}
+
 .avatar {
   width: 36px;
   height: 36px;

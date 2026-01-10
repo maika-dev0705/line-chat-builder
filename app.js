@@ -660,10 +660,67 @@ function renderCharacters() {
       renderPreview();
     });
 
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "character-delete";
+    deleteBtn.textContent = "削除";
+    deleteBtn.addEventListener("click", () => {
+      deleteCharacter(character.id);
+    });
+
     card.appendChild(avatar);
     card.appendChild(nameInput);
+    card.appendChild(deleteBtn);
     elements.characterList.appendChild(card);
   });
+}
+
+function deleteCharacter(characterId) {
+  const index = state.characters.findIndex(
+    (character) => character.id === characterId
+  );
+  if (index < 0) {
+    return;
+  }
+  if (state.characters.length <= 1) {
+    showError("キャラクターは1人以上必要です。");
+    return;
+  }
+  const removed = state.characters[index];
+  const fallback = state.characters.find(
+    (character) => character.id !== characterId
+  );
+  const removedName = removed?.name || "不明";
+  const removedMessageIds = new Set(
+    state.messages
+      .filter((message) => message.speakerId === characterId)
+      .map((message) => message.id)
+  );
+  const removedMessageCount = removedMessageIds.size;
+  const confirmed = window.confirm(
+    `「${removedName}」を削除しますか？\nこのキャラクターのメッセージ（${removedMessageCount}件）も削除されます。`
+  );
+  if (!confirmed) {
+    return;
+  }
+  state.characters.splice(index, 1);
+  state.messages = state.messages.filter(
+    (message) => message.speakerId !== characterId
+  );
+  if (removedMessageIds.has(state.selectedMessageId)) {
+    state.selectedMessageId = state.messages[0]?.id || null;
+  }
+  if (state.subjectiveId === characterId) {
+    state.subjectiveId = fallback?.id || "";
+  }
+  if (elements.editModal && !elements.editModal.classList.contains("hidden")) {
+    closeEditModal();
+  }
+  renderSubjectiveSelect();
+  renderCharacters();
+  renderMessageList();
+  renderMessageEditor();
+  renderPreview();
 }
 
 function renderMessageList() {
