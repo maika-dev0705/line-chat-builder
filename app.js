@@ -1585,6 +1585,10 @@ function exportPreviewAsPng() {
 
 function buildExportHtml() {
   const themeTokens = getThemeTokens(state.theme);
+  const previewWidth = Math.round(
+    document.querySelector(".phone")?.getBoundingClientRect().width || 420
+  );
+  const exportWidth = Math.max(360, previewWidth);
   const rows = state.messages
     .map((message) => {
       const character = getCharacter(message.speakerId);
@@ -1658,7 +1662,8 @@ function buildExportHtml() {
         color: #1f2b24;
       }
       .app {
-        max-width: 420px;
+        width: 100%;
+        max-width: ${exportWidth}px;
         margin: 0 auto;
         padding: 24px 12px 40px;
       }
@@ -1667,6 +1672,7 @@ function buildExportHtml() {
         border: 1px solid var(--stroke);
         background: var(--chat-bg);
         box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+        width: 100%;
         display: grid;
         grid-template-rows: auto auto 1fr auto;
         min-height: 640px;
