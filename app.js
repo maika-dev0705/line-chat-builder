@@ -1491,6 +1491,11 @@ function exportPreviewAsPng() {
     }
   };
 
+  const clearCaptureMode = () => {
+    target.classList.remove("capture-mode");
+  };
+  target.classList.add("capture-mode");
+
   if (window.html2canvas) {
     window
       .html2canvas(target, {
@@ -1501,8 +1506,12 @@ function exportPreviewAsPng() {
           element.classList?.contains("edit-controls") ||
           element.classList?.contains("image-resize-handle"),
       })
-      .then(saveCanvas)
+      .then((canvas) => {
+        clearCaptureMode();
+        saveCanvas(canvas);
+      })
       .catch(() => {
+        clearCaptureMode();
         showError("画像の生成に失敗しました。");
       });
     return;
@@ -1534,6 +1543,7 @@ function exportPreviewAsPng() {
   const svgUrl = URL.createObjectURL(svgBlob);
   const img = new Image();
   const timeoutId = window.setTimeout(() => {
+    clearCaptureMode();
     URL.revokeObjectURL(svgUrl);
     showError("画像の生成に失敗しました。ブラウザを変更するかHTMLで出力してください。");
   }, 3000);
@@ -1551,10 +1561,12 @@ function exportPreviewAsPng() {
     ctx.scale(scale, scale);
     ctx.drawImage(img, 0, 0, width, height);
     saveCanvas(canvas);
+    clearCaptureMode();
     URL.revokeObjectURL(svgUrl);
   };
   img.onerror = () => {
     window.clearTimeout(timeoutId);
+    clearCaptureMode();
     URL.revokeObjectURL(svgUrl);
     showError("画像の生成に失敗しました。");
   };
