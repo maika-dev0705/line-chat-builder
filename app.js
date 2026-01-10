@@ -33,6 +33,7 @@ const elements = {
   addTextBtn: document.getElementById("addTextBtn"),
   addImageBtn: document.getElementById("addImageBtn"),
   addImageInput: document.getElementById("addImageInput"),
+  exportFormat: document.getElementById("exportFormat"),
   exportBtn: document.getElementById("exportBtn"),
   chatTitlePreview: document.getElementById("chatTitlePreview"),
   chatView: document.getElementById("chatView"),
@@ -172,6 +173,11 @@ function init() {
   elements.exportBtn.addEventListener("click", () => {
     if (!state.messages.length) {
       showError("出力するメッセージがありません。");
+      return;
+    }
+    const format = elements.exportFormat?.value || "html";
+    if (format === "png") {
+      exportPreviewAsPng();
       return;
     }
     const html = buildExportHtml();
@@ -1384,6 +1390,17 @@ function downloadFile(content, filename) {
   URL.revokeObjectURL(url);
 }
 
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 function safeFileName(value) {
   return (value || "line-chat")
     .replace(/[\\/:*?"<>|]+/g, "-")
@@ -1398,6 +1415,87 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function collectDocumentStyles() {
+  let cssText = "";
+  Array.from(document.styleSheets).forEach((sheet) => {
+    try {
+      Array.from(sheet.cssRules || []).forEach((rule) => {
+        cssText += `${rule.cssText}\n`;
+      });
+    } catch (error) {
+      // Ignore cross-origin or unsupported styles.
+    }
+  });
+  return cssText;
+}
+
+function exportPreviewAsPng() {
+  const target = document.querySelector(".phone");
+  if (!target) {
+    showError("出力対象が見つかりません。");
+    return;
+  }
+  updateClock();
+  const rect = target.getBoundingClientRect();
+  const width = Math.ceil(rect.width);
+  const height = Math.ceil(rect.height);
+  const scale = Math.min(window.devicePixelRatio || 1, 2);
+  const clone = target.cloneNode(true);
+  clone.style.width = `${width}px`;
+  clone.style.height = `${height}px`;
+  clone.style.margin = "0";
+  clone.style.transform = "none";
+  clone.querySelectorAll(".edit-controls, .image-resize-handle").forEach((el) => {
+    el.remove();
+  });
+  const cssText = collectDocumentStyles();
+  const wrapperStyle = `width:${width}px;height:${height}px;display:block;`;
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="${wrapperStyle}">
+          <style><![CDATA[${cssText}]]></style>
+          ${clone.outerHTML}
+        </div>
+      </foreignObject>
+    </svg>
+  `;
+  const svgBlob = new Blob([svg], {
+    type: "image/svg+xml;charset=utf-8",
+  });
+  const svgUrl = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      URL.revokeObjectURL(svgUrl);
+      showError("画像の生成に失敗しました。");
+      return;
+    }
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0, width, height);
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        showError("画像の生成に失敗しました。");
+        return;
+      }
+      downloadBlob(
+        blob,
+        `${safeFileName(state.chatTitle || "line-chat")}.png`
+      );
+    }, "image/png");
+    URL.revokeObjectURL(svgUrl);
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(svgUrl);
+    showError("画像の生成に失敗しました。");
+  };
+  img.src = svgUrl;
 }
 
 function buildExportHtml() {

@@ -67,13 +67,20 @@
 
             <div class="section">
               <h3>キャラクター</h3>
-              <div id="characterList" class="character-list"></div>
               <p class="hint">アイコンをクリックして画像を変更できます。</p>
+              <div id="characterList" class="character-list"></div>
             </div>
 
             <div class="section">
+              <label class="field">
+                <span>出力形式</span>
+                <select id="exportFormat">
+                  <option value="html">HTML</option>
+                  <option value="png">画像（PNG）</option>
+                </select>
+              </label>
               <button id="exportBtn" class="primary wide">作成</button>
-              <p class="hint">画像を埋め込んだ単体HTMLを出力します。</p>
+              <p class="hint">HTMLまたは画像として保存できます。</p>
             </div>
           </div>
 
