@@ -1018,6 +1018,14 @@ body {
   transition: none !important;
 }
 
+.phone.capture-mode .bubble {
+  box-shadow: none !important;
+}
+
+.phone.capture-mode .msg-image {
+  box-shadow: none !important;
+}
+
 .chat-body.edit-mode .msg-row {
   cursor: grab;
 }
