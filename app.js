@@ -1402,6 +1402,15 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+function downloadDataUrl(dataUrl, filename) {
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 function safeFileName(value) {
   return (value || "line-chat")
     .replace(/[\\/:*?"<>|]+/g, "-")
@@ -1468,7 +1477,12 @@ function exportPreviewAsPng() {
   });
   const svgUrl = URL.createObjectURL(svgBlob);
   const img = new Image();
+  const timeoutId = window.setTimeout(() => {
+    URL.revokeObjectURL(svgUrl);
+    showError("画像の生成に失敗しました。ブラウザを変更するかHTMLで出力してください。");
+  }, 3000);
   img.onload = () => {
+    window.clearTimeout(timeoutId);
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(width * scale);
     canvas.height = Math.round(height * scale);
@@ -1480,19 +1494,33 @@ function exportPreviewAsPng() {
     }
     ctx.scale(scale, scale);
     ctx.drawImage(img, 0, 0, width, height);
+    const filename = `${safeFileName(state.chatTitle || "line-chat")}.png`;
+    if (!canvas.toBlob) {
+      try {
+        const dataUrl = canvas.toDataURL("image/png");
+        downloadDataUrl(dataUrl, filename);
+      } catch (error) {
+        showError("画像の生成に失敗しました。");
+      }
+      URL.revokeObjectURL(svgUrl);
+      return;
+    }
     canvas.toBlob((blob) => {
       if (!blob) {
-        showError("画像の生成に失敗しました。");
+        try {
+          const dataUrl = canvas.toDataURL("image/png");
+          downloadDataUrl(dataUrl, filename);
+        } catch (error) {
+          showError("画像の生成に失敗しました。");
+        }
         return;
       }
-      downloadBlob(
-        blob,
-        `${safeFileName(state.chatTitle || "line-chat")}.png`
-      );
+      downloadBlob(blob, filename);
     }, "image/png");
     URL.revokeObjectURL(svgUrl);
   };
   img.onerror = () => {
+    window.clearTimeout(timeoutId);
     URL.revokeObjectURL(svgUrl);
     showError("画像の生成に失敗しました。");
   };
