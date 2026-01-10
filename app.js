@@ -175,7 +175,8 @@ function init() {
       showError("出力するメッセージがありません。");
       return;
     }
-    const format = elements.exportFormat?.value || "html";
+    const format =
+      document.getElementById("exportFormat")?.value || "html";
     if (format === "png") {
       exportPreviewAsPng();
       return;
