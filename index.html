@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LINE風会話ログビルダー</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="badge">LINE風会話ログビルダー</div>
+        <h1>LINE風会話ログビルダー</h1>
+        <p>
+          会話ログHTMLを読み込み、編集してLINE風画面として出力します。
+        </p>
+      </div>
+    </header>
+
+    <main class="app">
+      <section class="panel input-panel">
+        <div class="panel-head">
+          <h2>1. 読み込み</h2>
+          <p>ログファイルまたはフォルダを指定して「生成」を押します。</p>
+        </div>
+        <div class="input-grid">
+          <div class="input-card">
+            <label class="file-button">
+              <input
+                id="fileInput"
+                type="file"
+                accept=".html,text/html"
+                aria-label="HTMLファイルを選択"
+              />
+              HTMLファイルを選択
+            </label>
+            <div id="dropZone" class="drop-zone" role="button" tabindex="0">
+              ここにHTMLファイルをドロップ
+            </div>
+          </div>
+          <div class="input-card">
+            <div id="filePicker" class="file-picker"></div>
+            <button id="generateBtn" class="primary">生成</button>
+            <div id="errorBox" class="error hidden" role="alert"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="workspace" class="workspace hidden">
+        <div class="workspace-grid">
+          <div class="panel editor-panel">
+            <div class="section">
+              <h3>チャット設定</h3>
+              <label class="field">
+                <span>チャット名</span>
+                <input id="chatTitleInput" type="text" placeholder="チャット名" />
+              </label>
+              <label class="field">
+                <span>テーマ</span>
+                <select id="themeSelect"></select>
+              </label>
+              <label class="field">
+                <span>主観キャラクター</span>
+                <select id="subjectiveSelect"></select>
+              </label>
+            </div>
+
+            <div class="section">
+              <h3>キャラクター</h3>
+              <div id="characterList" class="character-list"></div>
+            </div>
+
+            <div class="section">
+              <button id="exportBtn" class="primary wide">作成</button>
+              <p class="hint">画像を埋め込んだ単体HTMLを出力します。</p>
+            </div>
+          </div>
+
+          <div class="panel preview-panel">
+            <div class="preview-head">
+              <button id="toggleEditBtn" class="edit-toggle">編集モード: OFF</button>
+              <span class="edit-hint">編集モードでテキストの編集・挿入・並び替えができます</span>
+            </div>
+            <div class="phone">
+              <div class="status-bar">
+                <div class="status-left">MiGoBank</div>
+                <div id="statusTime" class="status-center">--:--</div>
+                <div class="status-right">
+                  <span class="icon-signal" aria-hidden="true"></span>
+                  <span class="icon-battery" aria-hidden="true"></span>
+                </div>
+              </div>
+              <div class="chat-top">
+                <button class="icon-button back" aria-label="戻る"></button>
+                <div id="chatTitlePreview" class="chat-title"></div>
+                <div class="chat-top-actions">
+                  <button class="icon-button search" aria-label="検索"></button>
+                  <button class="icon-button call" aria-label="通話"></button>
+                  <button class="icon-button menu" aria-label="メニュー"></button>
+                </div>
+              </div>
+              <div id="chatView" class="chat-body"></div>
+              <div class="chat-input">
+                <button class="icon-button plus" aria-label="追加"></button>
+                <button class="icon-button camera" aria-label="カメラ"></button>
+                <button class="icon-button image" aria-label="画像"></button>
+                <div class="chat-input-field">Aa</div>
+                <button class="icon-button mic" aria-label="マイク"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="editModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" id="modalBackdrop"></div>
+      <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="editModalTitle"
+      >
+        <div class="modal-head">
+          <h3 id="editModalTitle">メッセージ編集</h3>
+          <button id="modalCloseBtn" class="modal-close" aria-label="閉じる">
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
+          <label class="field">
+            <span>発言者</span>
+            <select id="modalSpeaker"></select>
+          </label>
+          <label class="field">
+            <span>種別</span>
+            <select id="modalType">
+              <option value="text">テキスト</option>
+              <option value="image">画像</option>
+            </select>
+          </label>
+          <label id="modalTextField" class="field">
+            <span>本文</span>
+            <textarea id="modalText" rows="4"></textarea>
+          </label>
+          <div id="modalImageField" class="field hidden">
+            <span>画像</span>
+            <div class="modal-image-row">
+              <div id="modalImagePreview" class="modal-image-preview">
+                画像未選択
+              </div>
+              <label class="file-button small">
+                <input
+                  id="modalImageInput"
+                  type="file"
+                  accept="image/png, image/jpeg"
+                />
+                画像を選択
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="modalCancelBtn" class="secondary">キャンセル</button>
+          <button id="modalSaveBtn" class="primary">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
