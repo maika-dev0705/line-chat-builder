@@ -1452,6 +1452,62 @@ function exportPreviewAsPng() {
   const width = Math.ceil(rect.width);
   const height = Math.ceil(rect.height);
   const scale = Math.min(window.devicePixelRatio || 1, 2);
+  const filename = `${safeFileName(state.chatTitle || "line-chat")}.png`;
+
+  const saveCanvas = (canvas) => {
+    if (!canvas) {
+      showError("画像の生成に失敗しました。");
+      return;
+    }
+    if (!canvas.toBlob) {
+      try {
+        const dataUrl = canvas.toDataURL("image/png");
+        downloadDataUrl(dataUrl, filename);
+      } catch (error) {
+        showError("画像の生成に失敗しました。");
+      }
+      return;
+    }
+    try {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          try {
+            const dataUrl = canvas.toDataURL("image/png");
+            downloadDataUrl(dataUrl, filename);
+          } catch (error) {
+            showError("画像の生成に失敗しました。");
+          }
+          return;
+        }
+        downloadBlob(blob, filename);
+      }, "image/png");
+    } catch (error) {
+      try {
+        const dataUrl = canvas.toDataURL("image/png");
+        downloadDataUrl(dataUrl, filename);
+      } catch (innerError) {
+        showError("画像の生成に失敗しました。");
+      }
+    }
+  };
+
+  if (window.html2canvas) {
+    window
+      .html2canvas(target, {
+        backgroundColor: null,
+        scale,
+        useCORS: true,
+        ignoreElements: (element) =>
+          element.classList?.contains("edit-controls") ||
+          element.classList?.contains("image-resize-handle"),
+      })
+      .then(saveCanvas)
+      .catch(() => {
+        showError("画像の生成に失敗しました。");
+      });
+    return;
+  }
+
   const clone = target.cloneNode(true);
   clone.style.width = `${width}px`;
   clone.style.height = `${height}px`;
@@ -1494,29 +1550,7 @@ function exportPreviewAsPng() {
     }
     ctx.scale(scale, scale);
     ctx.drawImage(img, 0, 0, width, height);
-    const filename = `${safeFileName(state.chatTitle || "line-chat")}.png`;
-    if (!canvas.toBlob) {
-      try {
-        const dataUrl = canvas.toDataURL("image/png");
-        downloadDataUrl(dataUrl, filename);
-      } catch (error) {
-        showError("画像の生成に失敗しました。");
-      }
-      URL.revokeObjectURL(svgUrl);
-      return;
-    }
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        try {
-          const dataUrl = canvas.toDataURL("image/png");
-          downloadDataUrl(dataUrl, filename);
-        } catch (error) {
-          showError("画像の生成に失敗しました。");
-        }
-        return;
-      }
-      downloadBlob(blob, filename);
-    }, "image/png");
+    saveCanvas(canvas);
     URL.revokeObjectURL(svgUrl);
   };
   img.onerror = () => {
