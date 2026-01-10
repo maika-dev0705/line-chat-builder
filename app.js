@@ -1496,81 +1496,91 @@ function exportPreviewAsPng() {
   };
   target.classList.add("capture-mode");
 
-  if (window.html2canvas) {
-    window
-      .html2canvas(target, {
-        backgroundColor: null,
-        scale,
-        useCORS: true,
-        ignoreElements: (element) =>
-          element.classList?.contains("edit-controls") ||
-          element.classList?.contains("image-resize-handle"),
-      })
-      .then((canvas) => {
-        clearCaptureMode();
-        saveCanvas(canvas);
-      })
-      .catch(() => {
-        clearCaptureMode();
-        showError("画像の生成に失敗しました。");
-      });
-    return;
-  }
-
-  const clone = target.cloneNode(true);
-  clone.style.width = `${width}px`;
-  clone.style.height = `${height}px`;
-  clone.style.margin = "0";
-  clone.style.transform = "none";
-  clone.querySelectorAll(".edit-controls, .image-resize-handle").forEach((el) => {
-    el.remove();
-  });
-  const cssText = collectDocumentStyles();
-  const wrapperStyle = `width:${width}px;height:${height}px;display:block;`;
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-      <foreignObject width="100%" height="100%">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="${wrapperStyle}">
-          <style><![CDATA[${cssText}]]></style>
-          ${clone.outerHTML}
-        </div>
-      </foreignObject>
-    </svg>
-  `;
-  const svgBlob = new Blob([svg], {
-    type: "image/svg+xml;charset=utf-8",
-  });
-  const svgUrl = URL.createObjectURL(svgBlob);
-  const img = new Image();
-  const timeoutId = window.setTimeout(() => {
-    clearCaptureMode();
-    URL.revokeObjectURL(svgUrl);
-    showError("画像の生成に失敗しました。ブラウザを変更するかHTMLで出力してください。");
-  }, 3000);
-  img.onload = () => {
-    window.clearTimeout(timeoutId);
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(width * scale);
-    canvas.height = Math.round(height * scale);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      URL.revokeObjectURL(svgUrl);
-      showError("画像の生成に失敗しました。");
+  const startCapture = () => {
+    if (window.html2canvas) {
+      window
+        .html2canvas(target, {
+          backgroundColor: null,
+          scale,
+          useCORS: true,
+          ignoreElements: (element) =>
+            element.classList?.contains("edit-controls") ||
+            element.classList?.contains("image-resize-handle"),
+        })
+        .then((canvas) => {
+          clearCaptureMode();
+          saveCanvas(canvas);
+        })
+        .catch(() => {
+          clearCaptureMode();
+          showError("画像の生成に失敗しました。");
+        });
       return;
     }
-    ctx.scale(scale, scale);
-    ctx.drawImage(img, 0, 0, width, height);
-    saveCanvas(canvas);
-    clearCaptureMode();
-    URL.revokeObjectURL(svgUrl);
+
+    const clone = target.cloneNode(true);
+    clone.style.width = `${width}px`;
+    clone.style.height = `${height}px`;
+    clone.style.margin = "0";
+    clone.style.transform = "none";
+    clone
+      .querySelectorAll(".edit-controls, .image-resize-handle")
+      .forEach((el) => {
+        el.remove();
+      });
+    const cssText = collectDocumentStyles();
+    const wrapperStyle = `width:${width}px;height:${height}px;display:block;`;
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+        <foreignObject width="100%" height="100%">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="${wrapperStyle}">
+            <style><![CDATA[${cssText}]]></style>
+            ${clone.outerHTML}
+          </div>
+        </foreignObject>
+      </svg>
+    `;
+    const svgBlob = new Blob([svg], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    const timeoutId = window.setTimeout(() => {
+      clearCaptureMode();
+      URL.revokeObjectURL(svgUrl);
+      showError(
+        "画像の生成に失敗しました。ブラウザを変更するかHTMLで出力してください。"
+      );
+    }, 3000);
+    img.onload = () => {
+      window.clearTimeout(timeoutId);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(width * scale);
+      canvas.height = Math.round(height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(svgUrl);
+        showError("画像の生成に失敗しました。");
+        return;
+      }
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0, width, height);
+      saveCanvas(canvas);
+      clearCaptureMode();
+      URL.revokeObjectURL(svgUrl);
+    };
+    img.onerror = () => {
+      window.clearTimeout(timeoutId);
+      clearCaptureMode();
+      URL.revokeObjectURL(svgUrl);
+      showError("画像の生成に失敗しました。");
+    };
+    img.src = svgUrl;
   };
-  img.onerror = () => {
-    window.clearTimeout(timeoutId);
-    clearCaptureMode();
-    URL.revokeObjectURL(svgUrl);
-    showError("画像の生成に失敗しました。");
-  };
-  img.src = svgUrl;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(startCapture);
+  });
 }
 
 function buildExportHtml() {

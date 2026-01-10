@@ -1009,9 +1009,13 @@ body {
 }
 
 .phone.capture-mode .msg-row {
-  animation: none;
-  opacity: 1;
-  transform: none;
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.phone.capture-mode * {
+  transition: none !important;
 }
 
 .chat-body.edit-mode .msg-row {
